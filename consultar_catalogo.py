@@ -1,6 +1,8 @@
+import csv
 import json
-import requests
+from io import StringIO
 
+import requests
 URL = "https://dados.ons.org.br/api/3/action/package_show"
 PARAMETROS = {"id": "carga-energia"}
 
@@ -63,3 +65,33 @@ dicionario = resposta_dicionario.json()
 
 print("\nConteúdo do dicionário:")
 print(json.dumps(dicionario, indent=2, ensure_ascii=False))
+
+resposta_csv = requests.get(
+    csv_2025["url"],
+    timeout=20,
+)
+
+print("\nStatus HTTP do CSV:", resposta_csv.status_code)
+resposta_csv.raise_for_status()
+
+resposta_csv.encoding = "utf-8-sig"
+linhas = resposta_csv.text.splitlines()
+
+print("\nPrimeiras seis linhas do CSV:")
+for linha in linhas[:6]:
+    print(linha)
+
+leitor = csv.DictReader(
+    StringIO(resposta_csv.text),
+    delimiter=";",
+)
+
+registros = list(leitor)
+
+if not registros:
+    raise RuntimeError("O CSV não contém registros de dados.")
+
+print("\nQuantidade de registros:", len(registros))
+
+print("\nPrimeiro registro estruturado:")
+print(json.dumps(registros[0], indent=2, ensure_ascii=False))
